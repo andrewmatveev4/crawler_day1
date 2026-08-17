@@ -6,12 +6,15 @@ class HTMLParser:
     def __init__(self):
         self.logger = logging.getLogger("parser")
 
-    def parse_html(self, html: str, url: str) -> dict:
+    async def parse_html(self, html: str, url: str) -> dict:
             try:
                 soup = BeautifulSoup(html, "lxml")
+                metadata = self.extract_metadata(soup)
+
                 return {
                     "url": url,
-                    "metadata": self.extract_metadata(soup),
+                    "metadata": metadata,
+                    "title": metadata.get("title", ""),
                     "text": self.extract_text(soup),
                     "links": self.extract_links(soup, url),
                     "images": self.extract_images(soup),
@@ -24,6 +27,7 @@ class HTMLParser:
                 return {
                     "url": url,
                     "metadata": {},
+                    "title": "",
                     "text": "",
                     "links": [],
                     "images": [],
@@ -37,8 +41,10 @@ class HTMLParser:
         links = []
         for a in soup.find_all("a"):
             href = a.get("href")
-            if href:
-                full_url = urljoin(base_url, href)
+            if not href:
+                continue
+            full_url = urljoin(base_url, href)
+            if full_url.startswith(("http://", "https://")):
                 links.append(full_url)
         return links
 
@@ -82,12 +88,15 @@ class HTMLParser:
 
         return metadata
 
-    def extract_text(self, soup):
-        # копия, чтобы не портить оригинальный soup
+    def extract_text(self, soup, selector: str = None):
         for tag in soup(["script", "style"]):
-            tag.decompose()   # удаляем мусорные теги
-        text = soup.get_text(separator=" ", strip=True)
-        return text
+            tag.decompose()
+        if selector:
+            element = soup.select_one(selector)
+            if element:
+                return element.get_text(separator=" ", strip=True)
+            return ""
+        return soup.get_text(separator=" ", strip=True)
 
     def extract_lists(self, soup):
         lists = []
