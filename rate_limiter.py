@@ -1,0 +1,35 @@
+import time
+import asyncio
+import random
+
+
+class RateLimiter:
+    def __init__(self, requests_per_second: float = 1.0, per_domain: bool = True, min_delay: float = 0.0, jitter: float = 0.0,):
+        self.interval = 1.0 / requests_per_second
+        self.per_domain = per_domain
+        self.min_delay = min_delay
+        self.jitter = jitter
+        self.next_free: dict[str, float] = {}
+        self.lock = asyncio.Lock()
+
+    async def acquire(self, domain: str = None):
+        key = domain if self.per_domain else "__global__"
+
+        async with self.lock:
+            now = time.monotonic()
+            step = max(self.interval, self.min_delay)
+            slot = max(now, self.next_free.get(key, 0.0))
+            self.next_free[key] = slot + step
+
+        wait = slot - now
+
+        if self.jitter > 0:
+            wait += random.uniform(0, self.jitter)
+
+        if wait > 0:
+            await asyncio.sleep(wait)
+
+    def bump_min_delay(self, value: float):
+        if value > self.min_delay:
+            self.min_delay = value
+
