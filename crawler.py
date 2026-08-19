@@ -60,15 +60,22 @@ class AsyncCrawler:
         return self._session
 
     async def fetch_url(self, url: str) -> str:
-        session = await self._get_session()
+        if not await self._is_allowed_by_robots(url):
+            self.blocked_by_robots.append(url)
+            logger.warning(f"robots.txt запретил: {url}")
+            return ""
+        await self._apply_crawl_delay(url)
+
         domain = urlparse(url).netloc
+        session = await self._get_session()
 
         async with self._semaphore_manager.acquire(url):
             await self._rate_limiter.acquire(domain)
             self.request_times.append(time.monotonic())
             logger.info(f"Start: {url}")
             try:
-                async with session.get(url) as response:
+                headers = {"User-Agent": self.user_agent}
+                async with session.get(url, headers=headers) as response:
                     response.raise_for_status()
                     text = await response.text()
                     logger.info(f"Done: {url} ({response.status}, {len(text)} bytes)")
@@ -86,8 +93,16 @@ class AsyncCrawler:
 
     async def fetch_urls(self, urls: list[str]) -> dict[str, str]:
         tasks = [self.fetch_url(url) for url in urls]
-        results = await asyncio.gather(*tasks)
-        return dict(zip(urls, results))
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        output = {}
+        for url, result in zip(urls, results):
+            if isinstance(result, Exception):
+                logger.warning(f"Ошибка для {url}: {type(result).__name__}")
+                output[url] = ""
+            else:
+                output[url] = result
+        return output
 
     async def fetch_urls_sequential(self, urls: list[str]) -> dict[str, str]:
         results = {}
@@ -120,80 +135,96 @@ class AsyncCrawler:
             return
         delay = await self._robots.get_crawl_delay(url, user_agent=self.user_agent)
         if delay > 0:
-            self._rate_limiter.bump_min_delay(delay)
+            domain = urlparse(url).netloc
+            self._rate_limiter.set_domain_delay(domain, delay)
             logger.info(f"Crawl-delay={delay}s применён из robots.txt для {url}")
     
     async def crawl(self, start_urls: list[str], max_pages: int = 100,
-                    same_domain_only: bool = False) -> dict:
-        from urllib.parse import urlparse
-
+                    same_domain_only: bool = False,
+                    exclude_patterns: list = None,
+                    include_patterns: list = None) -> dict:
         queue = CrawlerQueue()
         base_domain = urlparse(start_urls[0]).netloc
-        url_filter = URLFilter(same_domain_only=same_domain_only,
-                               base_domain=base_domain)
+        url_filter = URLFilter(
+            same_domain_only=same_domain_only,
+            base_domain=base_domain,
+            exclude_patterns=exclude_patterns,
+            include_patterns=include_patterns,
+        )
 
         for url in start_urls:
             queue.add_url(url, depth=0)
 
-        import time
         start_time = time.perf_counter()
-        page_count = 0
 
-        while True:
-            if len(self.processed_urls) >= max_pages:
+        while len(self.processed_urls) < max_pages:
+            batch = []
+            while len(batch) < self.max_concurrent:
+                item = await queue.get_next_item()
+                if item is None:
+                    break
+                batch.append(item)
+
+            if not batch:
                 break
 
-            item = await queue.get_next()
-            if item is None:
-                break
+            tasks = [
+                self._process_one(item["url"], item["depth"], url_filter)
+                for item in batch
+            ]
+            results = await asyncio.gather(*tasks)
 
-            url = item["url"]
-            depth = item["depth"]
-            url = normalize_url(url) 
+            for new_links in results:
+                for link, depth in new_links:
+                    queue.add_url(link, depth=depth)
 
-            if url in self.visited_urls:
-                continue
-            self.visited_urls.add(url)
-
-            if not await self._is_allowed_by_robots(url):
-                self.blocked_by_robots.append(url)
-                logger.warning(f"robots.txt запретил: {url}")
-                continue
-            await self._apply_crawl_delay(url)
-            result = await self.fetch_and_parse(url)
-
-            if result.get("error"):
-                self.failed_urls[url] = result["error"]
-                queue.mark_failed(url, result["error"])
-                continue
-
-            self.processed_urls[url] = result
-            queue.mark_processed(url)
-
-            page_count += 1
             elapsed = time.perf_counter() - start_time
-            speed = page_count / elapsed if elapsed > 0 else 0
-            stats = queue.get_stats()
+            speed = len(self.processed_urls) / elapsed if elapsed > 0 else 0
             logger.info(
-                f"Прогресс: обработано={page_count} | "
-                f"в очереди={stats['in_queue']} | "
+                f"Прогресс: обработано={len(self.processed_urls)} | "
                 f"ошибок={len(self.failed_urls)} | "
                 f"скорость={speed:.1f} стр/сек"
             )
 
-            if depth < self.max_depth:
-                for link in result.get("links", []):
-                    link = normalize_url(link)  
-                    if link not in self.visited_urls and url_filter.is_allowed(link):
-                        queue.add_url(link, depth=depth + 1)
-
         return self.processed_urls
+    
+    async def _process_one(self, url: str, depth: int, url_filter) -> list:
+        url = normalize_url(url)
 
+        if url in self.visited_urls:
+            return []
+        self.visited_urls.add(url)
+
+        result = await self.fetch_and_parse(url)
+
+        if result.get("error"):
+            self.failed_urls[url] = result["error"]
+            return []
+
+        self.processed_urls[url] = result
+
+        new_links = []
+        if depth < self.max_depth:
+            for link in result.get("links", []):
+                link = normalize_url(link)
+                if link not in self.visited_urls and url_filter.is_allowed(link):
+                    new_links.append((link, depth + 1))
+        return new_links
+    
     def get_avg_delay(self) -> float:
         if len(self.request_times) < 2:
             return 0.0
         times = sorted(self.request_times)
         gaps = [times[i] - times[i - 1] for i in range(1, len(times))]
         return sum(gaps) / len(gaps)
+
+    def get_error_stats(self) -> dict:
+        return {
+            "failed_urls_count": len(self.failed_urls),
+            "retry_stats": self.retry_strategy.stats,
+            "errors_by_type": self.retry_strategy.errors_by_type,
+            "permanent_errors": self.retry_strategy.permanent_errors,
+            "blocked_by_robots": len(self.blocked_by_robots),
+        }
 
     

@@ -10,6 +10,9 @@ class RateLimiter:
         self.min_delay = min_delay
         self.jitter = jitter
         self.next_free: dict[str, float] = {}
+        self.next_free: dict[str, float] = {}
+        self.domain_delay: dict[str, float] = {}
+        self.lock = asyncio.Lock()
         self.lock = asyncio.Lock()
 
     async def acquire(self, domain: str = None):
@@ -17,7 +20,8 @@ class RateLimiter:
 
         async with self.lock:
             now = time.monotonic()
-            step = max(self.interval, self.min_delay)
+            domain_min = self.domain_delay.get(key, self.min_delay)
+            step = max(self.interval, domain_min)
             slot = max(now, self.next_free.get(key, 0.0))
             self.next_free[key] = slot + step
 
@@ -29,7 +33,8 @@ class RateLimiter:
         if wait > 0:
             await asyncio.sleep(wait)
 
-    def bump_min_delay(self, value: float):
-        if value > self.min_delay:
-            self.min_delay = value
+    def set_domain_delay(self, domain: str, value: float):
+        current = self.domain_delay.get(domain, 0.0)
+        if value > current:
+            self.domain_delay[domain] = value
 
