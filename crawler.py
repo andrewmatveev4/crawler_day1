@@ -48,6 +48,7 @@ class AsyncCrawler:
 
         self.visited_urls = set()
         self.failed_urls = {}
+        self.error_records = []
         self.processed_urls = {}
         self.blocked_by_robots = []
         self.request_times = []
@@ -119,6 +120,11 @@ class AsyncCrawler:
             html = await self.retry_strategy.execute_with_retry(self.fetch_url, url)
         except Exception as e:
             logger.warning(f"Не удалось загрузить {url}: {type(e).__name__}")
+            self.error_records.append({
+                "url": url,
+                "error_type": type(e).__name__,
+                "message": str(e),
+            })
             return {"url": url, "error": f"{type(e).__name__}: {e}"}
 
         if not html:
@@ -158,8 +164,11 @@ class AsyncCrawler:
         start_time = time.perf_counter()
 
         while len(self.processed_urls) < max_pages:
+            remaining = max_pages - len(self.processed_urls)
+            batch_limit = min(self.max_concurrent, remaining)
+
             batch = []
-            while len(batch) < self.max_concurrent:
+            while len(batch) < batch_limit:
                 item = await queue.get_next_item()
                 if item is None:
                     break
@@ -223,8 +232,9 @@ class AsyncCrawler:
             "failed_urls_count": len(self.failed_urls),
             "retry_stats": self.retry_strategy.stats,
             "errors_by_type": self.retry_strategy.errors_by_type,
-            "permanent_errors": self.retry_strategy.permanent_errors,
+            "error_records": self.error_records,
             "blocked_by_robots": len(self.blocked_by_robots),
+            "avg_retry_time": self.retry_strategy.avg_retry_time(),
         }
 
     

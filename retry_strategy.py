@@ -18,6 +18,7 @@ class RetryStrategy:
         }
         self.errors_by_type = {}       # {"TransientError": 3, "PermanentError": 1}
         self.permanent_errors = []     # список сообщений постоянных ошибок
+        self.retry_delays = []
 
     async def execute_with_retry(self, coro, *args, **kwargs):
         for attempt in range(self.max_retries):
@@ -40,6 +41,8 @@ class RetryStrategy:
                 if attempt < self.max_retries - 1:
                     self.stats["retried"] += 1
                     delay = self.backoff_factor ** attempt
+                    self.retry_delays.append(delay)
+                    self.errors_by_type[type(e).__name__] = self.errors_by_type.get(type(e).__name__, 0) + 1
                     logger.warning(
                         f"Попытка {attempt + 1}/{self.max_retries} ({type(e).__name__}), жду {delay:.1f}s"
                     )
@@ -49,3 +52,8 @@ class RetryStrategy:
                     self.errors_by_type[type(e).__name__] = self.errors_by_type.get(type(e).__name__, 0) + 1
                     logger.warning(f"Все {self.max_retries} попыток исчерпаны ({type(e).__name__})")
                     raise
+
+    def avg_retry_time(self) -> float:
+        if not self.retry_delays:
+            return 0.0
+        return sum(self.retry_delays) / len(self.retry_delays)
