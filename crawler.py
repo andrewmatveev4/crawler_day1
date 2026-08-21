@@ -12,6 +12,7 @@ import time
 from errors import classify_http_status, TransientError, PermanentError, NetworkError
 from retry_strategy import RetryStrategy
 from errors import ParseError
+from datetime import datetime
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +25,7 @@ class AsyncCrawler:
     def __init__(self, max_concurrent: int = 10, max_depth: int = 2,
                  requests_per_second: float = 1.0, min_delay: float = 0.0,
                  jitter: float = 0.0, respect_robots: bool = True,
-                 user_agent: str = "MyBot/1.0", max_retries_on_error: int = 3, backoff_factor: float = 2.0):
+                 user_agent: str = "MyBot/1.0", max_retries_on_error: int = 3, backoff_factor: float = 2.0, storage=None):
         self.max_concurrent = max_concurrent
         self.max_depth = max_depth
         self.user_agent = user_agent
@@ -53,6 +54,7 @@ class AsyncCrawler:
         self.processed_urls = {}
         self.blocked_by_robots = []
         self.request_times = []
+        self.storage = storage
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
@@ -120,6 +122,8 @@ class AsyncCrawler:
     async def close(self) -> None:
         if self._session and not self._session.closed:
             await self._session.close()
+        if self.storage is not None:
+            await self.storage.close()
 
     async def fetch_and_parse(self, url: str) -> dict:
         try:
@@ -227,6 +231,19 @@ class AsyncCrawler:
             return []
 
         self.processed_urls[url] = result
+        if self.storage is not None:
+            record = {
+                "url": url,
+                "title": result.get("title", ""),
+                "text": result.get("text", ""),
+                "links": result.get("links", []),
+                "metadata": result.get("metadata", {}),
+                "crawled_at": datetime.now().isoformat(),
+            }
+            try:
+                await self.storage.save(record)
+            except Exception as e:
+                logger.warning(f"Не удалось сохранить {url}: {type(e).__name__}: {e}")
 
         new_links = []
         if depth < self.max_depth:

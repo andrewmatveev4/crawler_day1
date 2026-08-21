@@ -1,19 +1,31 @@
 import asyncio
-from crawler import AsyncCrawler
+import os
+from storage import JSONStorage
+
 
 
 async def main():
-    crawler = AsyncCrawler(max_concurrent=10, max_depth=0, respect_robots=False, requests_per_second=20.0)
+    path = "test_output.jsonl"
+    # чистим перед тестом, чтоб не мешались старые записи (append копит!)
+    if os.path.exists(path):
+        os.remove(path)
 
-    # 10 стартовых URL, но max_pages=5 — должно обработаться РОВНО 5
-    start_urls = [f"https://books.toscrape.com/catalogue/page-{i}.html" for i in range(1, 11)]
+    storage = JSONStorage(path)
 
-    results = await crawler.crawl(start_urls=start_urls, max_pages=5)
-    await crawler.close()
+    await storage.save({"url": "http://a.com", "title": "Привет мир"})
+    await storage.save({"url": "http://b.com", "title": "Второй"})
+    await storage.close()
 
-    print(f"\nСтартовых URL: {len(start_urls)}")
-    print(f"max_pages: 5")
-    print(f"Обработано: {len(results)}  {'✅ лимит соблюдён' if len(results) <= 5 else '❌ перебор!'}")
+    print("=== содержимое файла ===")
+    with open(path, encoding="utf-8") as f:
+        content = f.read()
+    print(content)
+
+    lines = content.strip().split("\n")
+    print(f"=== строк записано: {len(lines)} (ждём 2) ===")
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
+
+

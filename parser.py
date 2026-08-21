@@ -59,7 +59,7 @@ class HTMLParser:
 
         # title — обычный тег, как раньше
         if soup.title:
-            metadata["title"] = soup.title.text
+            metadata["title"] = soup.title.text.strip()
         else:
             metadata["title"] = ""
 
