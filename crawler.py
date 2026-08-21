@@ -11,6 +11,7 @@ from robots import RobotsParser
 import time
 from errors import classify_http_status, TransientError, PermanentError, NetworkError
 from retry_strategy import RetryStrategy
+from errors import ParseError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,7 +61,11 @@ class AsyncCrawler:
             self._session = aiohttp.ClientSession(timeout=timeout, connector=connector)
         return self._session
 
-    async def fetch_url(self, url: str) -> str:
+    def _timeout_for_attempt(self, attempt: int, base_timeout: int = 30) -> aiohttp.ClientTimeout:
+        total = base_timeout + attempt * 5
+        return aiohttp.ClientTimeout(total=total, connect=10, sock_read=total)
+
+    async def fetch_url(self, url: str, attempt: int = 0) -> str:
         if not await self._is_allowed_by_robots(url):
             self.blocked_by_robots.append(url)
             logger.warning(f"robots.txt запретил: {url}")
@@ -69,6 +74,7 @@ class AsyncCrawler:
 
         domain = urlparse(url).netloc
         session = await self._get_session()
+        timeout = self._timeout_for_attempt(attempt)
 
         async with self._semaphore_manager.acquire(url):
             await self._rate_limiter.acquire(domain)
@@ -76,7 +82,7 @@ class AsyncCrawler:
             logger.info(f"Start: {url}")
             try:
                 headers = {"User-Agent": self.user_agent}
-                async with session.get(url, headers=headers) as response:
+                async with session.get(url, headers=headers, timeout=timeout) as response:
                     response.raise_for_status()
                     text = await response.text()
                     logger.info(f"Done: {url} ({response.status}, {len(text)} bytes)")
@@ -117,7 +123,7 @@ class AsyncCrawler:
 
     async def fetch_and_parse(self, url: str) -> dict:
         try:
-            html = await self.retry_strategy.execute_with_retry(self.fetch_url, url)
+            html = await self.retry_strategy.execute_with_retry(self.fetch_url, url, pass_attempt=True)
         except Exception as e:
             logger.warning(f"Не удалось загрузить {url}: {type(e).__name__}")
             self.error_records.append({
@@ -129,7 +135,17 @@ class AsyncCrawler:
 
         if not html:
             return {"url": url, "error": "пустой ответ"}
-        return await self.parser.parse_html(html, url)
+
+        try:
+            return await self.parser.parse_html(html, url)
+        except ParseError as e:
+            logger.warning(f"Не удалось распарсить {url}: {type(e).__name__}")
+            self.error_records.append({
+                "url": url,
+                "error_type": type(e).__name__,
+                "message": str(e),
+            })
+            return {"url": url, "error": f"{type(e).__name__}: {e}"}
 
     async def _is_allowed_by_robots(self, url: str) -> bool:
         if not self.respect_robots:
@@ -163,8 +179,8 @@ class AsyncCrawler:
 
         start_time = time.perf_counter()
 
-        while len(self.processed_urls) < max_pages:
-            remaining = max_pages - len(self.processed_urls)
+        while len(self.visited_urls) < max_pages:
+            remaining = max_pages - len(self.visited_urls)
             batch_limit = min(self.max_concurrent, remaining)
 
             batch = []

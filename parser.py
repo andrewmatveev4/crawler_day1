@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import logging
+from errors import ParseError
+
 
 class HTMLParser:
     def __init__(self):
@@ -24,18 +26,7 @@ class HTMLParser:
                 }
             except Exception as e:
                 self.logger.warning(f"Ошибка парсинга {url}: {e}")
-                return {
-                    "url": url,
-                    "metadata": {},
-                    "title": "",
-                    "text": "",
-                    "links": [],
-                    "images": [],
-                    "headings": [],
-                    "lists": [],
-                    "tables": [],
-                    "error": str(e),
-                }
+                raise ParseError(f"Не удалось распарсить {url}: {e}")
 
     def extract_links(self, soup, base_url):
         links = []

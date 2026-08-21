@@ -20,10 +20,14 @@ class RetryStrategy:
         self.permanent_errors = []     # список сообщений постоянных ошибок
         self.retry_delays = []
 
-    async def execute_with_retry(self, coro, *args, **kwargs):
+    async def execute_with_retry(self, coro, *args, pass_attempt: bool = False, **kwargs):
         for attempt in range(self.max_retries):
             try:
-                result = await coro(*args, **kwargs)
+                if pass_attempt:
+                    result = await coro(*args, attempt=attempt, **kwargs)
+                else:
+                    result = await coro(*args, **kwargs)
+            
                 if attempt > 0:
                     self.stats["succeeded_after_retry"] += 1
                     logger.info(f"Успех после {attempt} повтор(ов)")
