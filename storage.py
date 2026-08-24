@@ -64,7 +64,12 @@ class SQLiteStorage(DataStorage):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 url TEXT,
                 title TEXT,
-                crawled_at TEXT
+                text TEXT,
+                links TEXT,
+                metadata TEXT,
+                crawled_at TEXT,
+                status_code INTEGER,
+                content_type TEXT
             )
         """)
         await self._db.execute(
@@ -73,9 +78,17 @@ class SQLiteStorage(DataStorage):
         await self._db.commit()
 
     async def save(self, data: dict) -> None:
-        self._buffer.append(
-            (data.get("url"), data.get("title"), data.get("crawled_at"))
-        )
+        await self._ensure_db()
+        self._buffer.append((
+            data.get("url"),
+            data.get("title"),
+            data.get("text"),
+            json.dumps(data.get("links", []), ensure_ascii=False),
+            json.dumps(data.get("metadata", {}), ensure_ascii=False),
+            data.get("crawled_at"),
+            data.get("status_code"),
+            data.get("content_type"),
+        ))
         if len(self._buffer) >= self._batch_size:
             await self._flush()
 
@@ -83,7 +96,9 @@ class SQLiteStorage(DataStorage):
         if not self._buffer:
             return
         await self._db.executemany(
-            "INSERT INTO pages (url, title, crawled_at) VALUES (?, ?, ?)",
+            """INSERT INTO pages
+               (url, title, text, links, metadata, crawled_at, status_code, content_type)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             self._buffer,
         )
         await self._db.commit()
@@ -94,3 +109,7 @@ class SQLiteStorage(DataStorage):
         if self._db is not None:
             await self._db.close()
             self._db = None
+
+    async def _ensure_db(self) -> None:
+        if self._db is None:
+            await self.init_db()

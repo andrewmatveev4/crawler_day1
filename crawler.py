@@ -55,6 +55,9 @@ class AsyncCrawler:
         self.blocked_by_robots = []
         self.request_times = []
         self.storage = storage
+        self._response_meta = {}
+        self.start_time = None
+        self.end_time = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
@@ -87,6 +90,9 @@ class AsyncCrawler:
                 async with session.get(url, headers=headers, timeout=timeout) as response:
                     response.raise_for_status()
                     text = await response.text()
+                    status = response.status
+                    content_type = response.headers.get("Content-Type", "")
+                    self._response_meta[url] = (status, content_type)
                     logger.info(f"Done: {url} ({response.status}, {len(text)} bytes)")
                     return text
             except aiohttp.ClientResponseError as e:
@@ -101,7 +107,10 @@ class AsyncCrawler:
                 raise NetworkError(f"Network: {url}: {e}")
 
     async def fetch_urls(self, urls: list[str]) -> dict[str, str]:
-        tasks = [self.fetch_url(url) for url in urls]
+        tasks = [
+            self.retry_strategy.execute_with_retry(self.fetch_url, url, pass_attempt=True)
+            for url in urls
+        ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         output = {}
@@ -181,7 +190,7 @@ class AsyncCrawler:
         for url in start_urls:
             queue.add_url(url, depth=0)
 
-        start_time = time.perf_counter()
+        self.start_time = time.perf_counter()
 
         while len(self.visited_urls) < max_pages:
             remaining = max_pages - len(self.visited_urls)
@@ -207,14 +216,20 @@ class AsyncCrawler:
                 for link, depth in new_links:
                     queue.add_url(link, depth=depth)
 
-            elapsed = time.perf_counter() - start_time
+            elapsed = time.perf_counter() - self.start_time
             speed = len(self.processed_urls) / elapsed if elapsed > 0 else 0
+            done = len(self.visited_urls)
+            percent = (done / max_pages * 100) if max_pages > 0 else 0
+            remaining_pages = max(0, max_pages - done)
+            eta = remaining_pages / speed if speed > 0 else 0
             logger.info(
-                f"Прогресс: обработано={len(self.processed_urls)} | "
+                f"Прогресс: {done}/{max_pages} ({percent:.0f}%) | "
                 f"ошибок={len(self.failed_urls)} | "
-                f"скорость={speed:.1f} стр/сек"
+                f"скорость={speed:.1f} стр/сек | "
+                f"ETA={eta:.0f}s"
             )
 
+        self.end_time = time.perf_counter()
         return self.processed_urls
     
     async def _process_one(self, url: str, depth: int, url_filter) -> list:
@@ -232,6 +247,7 @@ class AsyncCrawler:
 
         self.processed_urls[url] = result
         if self.storage is not None:
+            status, content_type = self._response_meta.get(url, (None, ""))
             record = {
                 "url": url,
                 "title": result.get("title", ""),
@@ -239,6 +255,8 @@ class AsyncCrawler:
                 "links": result.get("links", []),
                 "metadata": result.get("metadata", {}),
                 "crawled_at": datetime.now().isoformat(),
+                "status_code": status,
+                "content_type": content_type,
             }
             try:
                 await self.storage.save(record)

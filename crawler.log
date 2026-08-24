@@ -1,0 +1,92 @@
+16:53:02 | INFO | Start: https://books.toscrape.com
+16:53:03 | INFO | Done: https://books.toscrape.com (200, 51274 bytes)
+16:53:03 | INFO | Прогресс: обработано=1 | ошибок=0 | скорость=1.0 стр/сек
+16:53:03 | INFO | Start: https://books.toscrape.com/index.html
+16:53:03 | INFO | Done: https://books.toscrape.com/index.html (200, 51274 bytes)
+16:53:03 | INFO | Start: https://books.toscrape.com/catalogue/category/books_1/index.html
+16:53:04 | INFO | Done: https://books.toscrape.com/catalogue/category/books_1/index.html (200, 50587 bytes)
+16:53:04 | INFO | Start: https://books.toscrape.com/catalogue/category/books/travel_2/index.html
+16:53:04 | INFO | Done: https://books.toscrape.com/catalogue/category/books/travel_2/index.html (200, 36992 bytes)
+16:53:04 | INFO | Start: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html
+16:53:05 | INFO | Done: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html (200, 50368 bytes)
+16:53:05 | INFO | Start: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html
+16:53:05 | INFO | Done: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html (200, 50089 bytes)
+16:53:05 | INFO | Start: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html
+16:53:06 | INFO | Done: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html (200, 51435 bytes)
+16:53:06 | INFO | Start: https://books.toscrape.com/catalogue/category/books/classics_6/index.html
+16:53:06 | INFO | Done: https://books.toscrape.com/catalogue/category/books/classics_6/index.html (200, 47855 bytes)
+16:53:06 | INFO | Start: https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html
+16:53:07 | INFO | Done: https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html (200, 37018 bytes)
+16:53:07 | INFO | Прогресс: обработано=9 | ошибок=0 | скорость=1.9 стр/сек
+16:53:07 | INFO | Start: https://books.toscrape.com/catalogue/category/books/romance_8/index.html
+16:53:07 | INFO | Done: https://books.toscrape.com/catalogue/category/books/romance_8/index.html (200, 50377 bytes)
+16:53:07 | INFO | Прогресс: обработано=10 | ошибок=0 | скорость=1.9 стр/сек
+16:54:32 | INFO | Start: https://books.toscrape.com
+16:54:33 | INFO | Done: https://books.toscrape.com (200, 51274 bytes)
+16:54:33 | INFO | Прогресс: 1/10 (10%) | ошибок=0 | скорость=0.9 стр/сек | ETA=9s
+16:54:33 | INFO | Start: https://books.toscrape.com/index.html
+16:54:33 | INFO | Done: https://books.toscrape.com/index.html (200, 51274 bytes)
+16:54:33 | INFO | Start: https://books.toscrape.com/catalogue/category/books_1/index.html
+16:54:34 | INFO | Done: https://books.toscrape.com/catalogue/category/books_1/index.html (200, 50587 bytes)
+16:54:34 | INFO | Start: https://books.toscrape.com/catalogue/category/books/travel_2/index.html
+16:54:34 | INFO | Done: https://books.toscrape.com/catalogue/category/books/travel_2/index.html (200, 36992 bytes)
+16:54:34 | INFO | Start: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html
+16:54:35 | INFO | Start: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html
+16:54:35 | INFO | Done: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html (200, 50368 bytes)
+16:54:35 | INFO | Start: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html
+16:54:36 | INFO | Done: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html (200, 51435 bytes)
+16:54:36 | INFO | Done: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html (200, 50089 bytes)
+16:54:36 | INFO | Start: https://books.toscrape.com/catalogue/category/books/classics_6/index.html
+16:54:36 | INFO | Done: https://books.toscrape.com/catalogue/category/books/classics_6/index.html (200, 47855 bytes)
+16:54:36 | INFO | Start: https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html
+16:54:37 | INFO | Done: https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html (200, 37018 bytes)
+16:54:37 | INFO | Прогресс: 9/10 (90%) | ошибок=0 | скорость=1.8 стр/сек | ETA=1s
+16:54:37 | INFO | Start: https://books.toscrape.com/catalogue/category/books/romance_8/index.html
+16:54:37 | INFO | Done: https://books.toscrape.com/catalogue/category/books/romance_8/index.html (200, 50377 bytes)
+16:54:37 | INFO | Прогресс: 10/10 (100%) | ошибок=0 | скорость=1.8 стр/сек | ETA=0s
+16:57:06 | INFO | Start: https://books.toscrape.com
+16:57:07 | INFO | Done: https://books.toscrape.com (200, 51274 bytes)
+16:57:07 | INFO | Прогресс: 1/10 (10%) | ошибок=0 | скорость=1.0 стр/сек | ETA=9s
+16:57:07 | INFO | Start: https://books.toscrape.com/index.html
+16:57:08 | INFO | Done: https://books.toscrape.com/index.html (200, 51274 bytes)
+16:57:08 | INFO | Start: https://books.toscrape.com/catalogue/category/books_1/index.html
+16:57:08 | INFO | Done: https://books.toscrape.com/catalogue/category/books_1/index.html (200, 50587 bytes)
+16:57:08 | INFO | Start: https://books.toscrape.com/catalogue/category/books/travel_2/index.html
+16:57:08 | INFO | Done: https://books.toscrape.com/catalogue/category/books/travel_2/index.html (200, 36992 bytes)
+16:57:09 | INFO | Start: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html
+16:57:09 | INFO | Done: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html (200, 50368 bytes)
+16:57:09 | INFO | Start: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html
+16:57:10 | INFO | Done: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html (200, 50089 bytes)
+16:57:10 | INFO | Start: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html
+16:57:10 | INFO | Done: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html (200, 51435 bytes)
+16:57:10 | INFO | Start: https://books.toscrape.com/catalogue/category/books/classics_6/index.html
+16:57:10 | INFO | Done: https://books.toscrape.com/catalogue/category/books/classics_6/index.html (200, 47855 bytes)
+16:57:11 | INFO | Start: https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html
+16:57:11 | INFO | Done: https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html (200, 37018 bytes)
+16:57:11 | INFO | Прогресс: 9/10 (90%) | ошибок=0 | скорость=1.9 стр/сек | ETA=1s
+16:57:11 | INFO | Start: https://books.toscrape.com/catalogue/category/books/romance_8/index.html
+16:57:12 | INFO | Done: https://books.toscrape.com/catalogue/category/books/romance_8/index.html (200, 50377 bytes)
+16:57:12 | INFO | Прогресс: 10/10 (100%) | ошибок=0 | скорость=1.8 стр/сек | ETA=0s
+16:58:38 | INFO | Start: https://books.toscrape.com
+16:58:39 | INFO | Done: https://books.toscrape.com (200, 51274 bytes)
+16:58:39 | INFO | Прогресс: 1/10 (10%) | ошибок=0 | скорость=0.9 стр/сек | ETA=10s
+16:58:39 | INFO | Start: https://books.toscrape.com/index.html
+16:58:40 | INFO | Done: https://books.toscrape.com/index.html (200, 51274 bytes)
+16:58:40 | INFO | Start: https://books.toscrape.com/catalogue/category/books_1/index.html
+16:58:40 | INFO | Done: https://books.toscrape.com/catalogue/category/books_1/index.html (200, 50587 bytes)
+16:58:40 | INFO | Start: https://books.toscrape.com/catalogue/category/books/travel_2/index.html
+16:58:41 | INFO | Done: https://books.toscrape.com/catalogue/category/books/travel_2/index.html (200, 36992 bytes)
+16:58:41 | INFO | Start: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html
+16:58:41 | INFO | Done: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html (200, 50368 bytes)
+16:58:41 | INFO | Start: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html
+16:58:42 | INFO | Done: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html (200, 50089 bytes)
+16:58:42 | INFO | Start: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html
+16:58:42 | INFO | Done: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html (200, 51435 bytes)
+16:58:42 | INFO | Start: https://books.toscrape.com/catalogue/category/books/classics_6/index.html
+16:58:43 | INFO | Done: https://books.toscrape.com/catalogue/category/books/classics_6/index.html (200, 47855 bytes)
+16:58:43 | INFO | Start: https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html
+16:58:43 | INFO | Done: https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html (200, 37018 bytes)
+16:58:43 | INFO | Прогресс: 9/10 (90%) | ошибок=0 | скорость=1.8 стр/сек | ETA=1s
+16:58:43 | INFO | Start: https://books.toscrape.com/catalogue/category/books/romance_8/index.html
+16:58:44 | INFO | Done: https://books.toscrape.com/catalogue/category/books/romance_8/index.html (200, 50377 bytes)
+16:58:44 | INFO | Прогресс: 10/10 (100%) | ошибок=0 | скорость=1.8 стр/сек | ETA=0s
