@@ -1,0 +1,9 @@
+{
+    "sitemap": "https://www.gov.uk/sitemap.xml",
+    "max_pages": 5,
+    "max_depth": 0,
+    "rate_limit": 2.0,
+    "respect_robots": false,
+    "format": "json",
+    "output": "sitemap_results.jsonl"
+}

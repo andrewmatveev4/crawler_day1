@@ -1,5 +1,7 @@
 import argparse
 import json
+import asyncio
+from advanced_crawler import AdvancedCrawler
 
 
 def load_config(path: str) -> dict:
@@ -50,7 +52,25 @@ def build_settings(args) -> dict:
     return settings
 
 
+async def run_crawler(settings):
+    crawler = AdvancedCrawler(settings)
+    await crawler.crawl()
+    stats = crawler.get_stats()
+
+    print(f"\nОбработано: {stats.total_pages()} | успешно: {stats.successful()} | ошибок: {stats.failed()}")
+    print(f"Статус-коды: {stats.status_distribution()}")
+
+    output = settings.get("output", "results.json")
+    if output.endswith(".html"):
+        crawler.export_to_html_report(output)
+    else:
+        crawler.export_to_json(output)
+    print(f"Результат сохранён: {output}")
+
+    await crawler.close()
+
+
 if __name__ == "__main__":
     args = parse_args()
     settings = build_settings(args)
-    print(settings)
+    asyncio.run(run_crawler(settings))

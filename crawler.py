@@ -88,11 +88,11 @@ class AsyncCrawler:
             try:
                 headers = {"User-Agent": self.user_agent}
                 async with session.get(url, headers=headers, timeout=timeout) as response:
-                    response.raise_for_status()
-                    text = await response.text()
                     status = response.status
                     content_type = response.headers.get("Content-Type", "")
                     self._response_meta[url] = (status, content_type)
+                    response.raise_for_status()
+                    text = await response.text()
                     logger.info(f"Done: {url} ({response.status}, {len(text)} bytes)")
                     return text
             except aiohttp.ClientResponseError as e:

@@ -1,16 +1,16 @@
 {
-  "total_pages": 10,
-  "successful": 10,
+  "total_pages": 5,
+  "successful": 5,
   "failed": 0,
-  "elapsed_time": 5.72,
-  "avg_speed": 1.75,
+  "elapsed_time": 4.44,
+  "avg_speed": 1.13,
   "status_distribution": {
-    "200": 10
+    "200": 5
   },
   "top_domains": [
     [
       "books.toscrape.com",
-      10
+      5
     ]
   ]
 }

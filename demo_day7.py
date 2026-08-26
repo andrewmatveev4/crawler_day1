@@ -4,7 +4,9 @@ from advanced_crawler import AdvancedCrawler
 
 async def main():
     crawler = AdvancedCrawler.from_config("config.json")
-    stats = await crawler.run()
+
+    await crawler.crawl()
+    stats = crawler.get_stats()
 
     print("\n" + "=" * 40)
     print("РЕЗУЛЬТАТ (через AdvancedCrawler)")
@@ -17,9 +19,11 @@ async def main():
     print(f"Статус-коды:      {stats.status_distribution()}")
     print(f"Топ доменов:      {stats.top_domains()}")
 
-    stats.export_to_json("report.json")
-    stats.export_to_html_report("report.html")
+    crawler.export_to_json("report.json")
+    crawler.export_to_html_report("report.html")
     print("\nОтчёты сохранены: report.json, report.html")
+
+    await crawler.close()
 
 
 if __name__ == "__main__":
