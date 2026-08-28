@@ -179,10 +179,10 @@ class AsyncCrawler:
                     exclude_patterns: list = None,
                     include_patterns: list = None) -> dict:
         queue = CrawlerQueue()
-        base_domain = urlparse(start_urls[0]).netloc
+        base_domains = [urlparse(u).netloc for u in start_urls]
         url_filter = URLFilter(
             same_domain_only=same_domain_only,
-            base_domain=base_domain,
+            base_domains=base_domains,
             exclude_patterns=exclude_patterns,
             include_patterns=include_patterns,
         )

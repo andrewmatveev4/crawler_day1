@@ -22,11 +22,17 @@ class AdvancedCrawler:
 
     def _make_storage(self):
         output = self.settings.get("output", "results.json")
-        fmt = self.settings.get("format", "json")
+        fmt = self.settings.get("format")
 
-        if fmt == "json":
-            return JSONStorage(output)
-        elif fmt == "csv":
+        if fmt is None:
+            if output.endswith(".csv"):
+                fmt = "csv"
+            elif output.endswith(".db") or output.endswith(".sqlite"):
+                fmt = "sqlite"
+            else:
+                fmt = "json"
+
+        if fmt == "csv":
             return CSVStorage(output)
         elif fmt == "sqlite":
             return SQLiteStorage(output)

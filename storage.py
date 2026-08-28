@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import asyncio
 import aiofiles
 import json
 import csv
@@ -56,6 +57,7 @@ class SQLiteStorage(DataStorage):
         self._db = None
         self._buffer = []
         self._batch_size = batch_size
+        self._lock = asyncio.Lock()
 
     async def init_db(self) -> None:
         self._db = await aiosqlite.connect(self.filepath)
@@ -78,19 +80,20 @@ class SQLiteStorage(DataStorage):
         await self._db.commit()
 
     async def save(self, data: dict) -> None:
-        await self._ensure_db()
-        self._buffer.append((
-            data.get("url"),
-            data.get("title"),
-            data.get("text"),
-            json.dumps(data.get("links", []), ensure_ascii=False),
-            json.dumps(data.get("metadata", {}), ensure_ascii=False),
-            data.get("crawled_at"),
-            data.get("status_code"),
-            data.get("content_type"),
-        ))
-        if len(self._buffer) >= self._batch_size:
-            await self._flush()
+        async with self._lock:
+            await self._ensure_db()
+            self._buffer.append((
+                data.get("url"),
+                data.get("title"),
+                data.get("text"),
+                json.dumps(data.get("links", []), ensure_ascii=False),
+                json.dumps(data.get("metadata", {}), ensure_ascii=False),
+                data.get("crawled_at"),
+                data.get("status_code"),
+                data.get("content_type"),
+            ))
+            if len(self._buffer) >= self._batch_size:
+                await self._flush()
 
     async def _flush(self) -> None:
         if not self._buffer:
@@ -105,10 +108,11 @@ class SQLiteStorage(DataStorage):
         self._buffer = []
 
     async def close(self) -> None:
-        await self._flush()
-        if self._db is not None:
-            await self._db.close()
-            self._db = None
+        async with self._lock:
+            await self._flush()
+            if self._db is not None:
+                await self._db.close()
+                self._db = None
 
     async def _ensure_db(self) -> None:
         if self._db is None:

@@ -1,10 +1,10 @@
 from urllib.parse import urlparse, urlunparse
 
 class URLFilter:
-    def __init__(self, same_domain_only=False, base_domain="",
+    def __init__(self, same_domain_only=False, base_domains=None,
                  exclude_patterns=None, include_patterns=None):
         self.same_domain_only = same_domain_only
-        self.base_domain = base_domain
+        self.base_domains = set(base_domains) if base_domains else set()
         self.exclude_patterns = exclude_patterns or []
         self.include_patterns = include_patterns or []
 
@@ -12,7 +12,7 @@ class URLFilter:
         # 1. фильтр по домену
         if self.same_domain_only:
             domain = urlparse(url).netloc
-            if domain != self.base_domain:
+            if domain not in self.base_domains:
                 return False
 
         # 2. исключающие паттерны

@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument("--rate-limit", type=float, help="Запросов/сек")
     parser.add_argument("--respect-robots", action="store_true", help="Соблюдать robots.txt")
     parser.add_argument("--config", help="Путь к JSON конфигу")
+    parser.add_argument("--report", help="Файл для отчёта статистики")
 
     return parser.parse_args()
 
@@ -48,6 +49,8 @@ def build_settings(args) -> dict:
         settings["rate_limit"] = args.rate_limit
     if args.respect_robots:
         settings["respect_robots"] = True
+    if args.report is not None:
+        settings["report"] = args.report
 
     return settings
 
@@ -60,12 +63,16 @@ async def run_crawler(settings):
     print(f"\nОбработано: {stats.total_pages()} | успешно: {stats.successful()} | ошибок: {stats.failed()}")
     print(f"Статус-коды: {stats.status_distribution()}")
 
+    report = settings.get("report")
+    if report:
+        if report.endswith(".html"):
+            crawler.export_to_html_report(report)
+        else:
+            crawler.export_to_json(report)
+        print(f"Отчёт сохранён: {report}")
+
     output = settings.get("output", "results.json")
-    if output.endswith(".html"):
-        crawler.export_to_html_report(output)
-    else:
-        crawler.export_to_json(output)
-    print(f"Результат сохранён: {output}")
+    print(f"Страницы сохранены: {output}")
 
     await crawler.close()
 
