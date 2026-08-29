@@ -96,3 +96,6 @@ class CrawlerStats:
 
         with open(filename, "w", encoding="utf-8") as f:
             f.write(html)
+
+    def __getitem__(self, key):
+        return self.to_dict()[key]

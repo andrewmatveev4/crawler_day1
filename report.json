@@ -2,8 +2,8 @@
   "total_pages": 10,
   "successful": 10,
   "failed": 0,
-  "elapsed_time": 5.72,
-  "avg_speed": 1.75,
+  "elapsed_time": 5.65,
+  "avg_speed": 1.77,
   "status_distribution": {
     "200": 10
   },

@@ -45,9 +45,11 @@ from advanced_crawler import AdvancedCrawler
 
 async def main():
     crawler = AdvancedCrawler.from_config("config.json")
-    stats = await crawler.run()
+    await crawler.crawl()
+    stats = crawler.get_stats()
     print(f"Обработано: {stats.total_pages()}")
-    stats.export_to_html_report("report.html")
+    crawler.export_to_html_report("report.html")
+    await crawler.close()
 
 
 asyncio.run(main())

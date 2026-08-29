@@ -40,6 +40,7 @@ class AdvancedCrawler:
             return JSONStorage(output)
 
     async def crawl(self, start_urls: list = None):
+        setup_logging(self.settings.get("log_file", "crawler.log"))
         storage = self._make_storage()
         self.crawler = AsyncCrawler(
             max_concurrent=self.settings.get("max_concurrent", 10),
