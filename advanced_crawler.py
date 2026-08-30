@@ -1,4 +1,3 @@
-from crawler import AsyncCrawler
 from stats import CrawlerStats
 from storage import JSONStorage, CSVStorage, SQLiteStorage
 from logging_setup import setup_logging
@@ -40,6 +39,7 @@ class AdvancedCrawler:
             return JSONStorage(output)
 
     async def crawl(self, start_urls: list = None):
+        from crawler import AsyncCrawler
         setup_logging(self.settings.get("log_file", "crawler.log"))
         storage = self._make_storage()
         self.crawler = AsyncCrawler(

@@ -1,22 +1,40 @@
 import asyncio
-from sitemap import SitemapParser
+from crawler import AsyncCrawler
+from storage import DataStorage
+
+
+class FlakyStorage(DataStorage):
+    """Падает первые 2 раза на каждом save, потом успевает."""
+    def __init__(self):
+        self.saved = []
+        self.attempts = 0
+
+    async def save(self, data):
+        self.attempts += 1
+        if self.attempts % 3 != 0:   # падает 2 раза из 3
+            raise IOError(f"притворяюсь, что диск занят (попытка {self.attempts})")
+        self.saved.append(data)
+
+    async def close(self):
+        pass
 
 
 async def main():
-    parser = SitemapParser()
+    storage = FlakyStorage()
+    crawler = AsyncCrawler(
+        max_concurrent=1, max_depth=0, respect_robots=False,
+        max_retries_on_error=3, storage=storage,
+    )
+    await crawler.crawl(
+        start_urls=["https://books.toscrape.com/"],
+        max_pages=1,
+    )
+    await crawler.close()
 
-    # обычный или индексный — у большинства крупных есть
-    print("=== gov.uk ===")
-    urls = await parser.fetch_sitemap("https://www.gov.uk/sitemap.xml")
-    print(f"Найдено url: {len(urls)}")
-    for u in urls[:5]:
-        print(f"  {u}")
+    print("\n" + "=" * 40)
+    print(f"Всего попыток save: {storage.attempts}")
+    print(f"Реально сохранено:  {len(storage.saved)} (ждём 1 — ретраи спасли запись)")
 
-    print("\n=== w3.org ===")
-    urls2 = await parser.fetch_sitemap("https://www.w3.org/sitemap.xml")
-    print(f"Найдено url: {len(urls2)}")
-    for u in urls2[:5]:
-        print(f"  {u}")
 
 if __name__ == "__main__":
     asyncio.run(main())

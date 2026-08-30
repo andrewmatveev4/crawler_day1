@@ -13,6 +13,8 @@ from errors import classify_http_status, TransientError, PermanentError, Network
 from retry_strategy import RetryStrategy
 from errors import ParseError
 from datetime import datetime
+from advanced_crawler import AdvancedCrawler
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -178,7 +180,7 @@ class AsyncCrawler:
                     same_domain_only: bool = False,
                     exclude_patterns: list = None,
                     include_patterns: list = None) -> dict:
-        queue = CrawlerQueue()
+        self.queue = CrawlerQueue()
         base_domains = [urlparse(u).netloc for u in start_urls]
         url_filter = URLFilter(
             same_domain_only=same_domain_only,
@@ -188,7 +190,7 @@ class AsyncCrawler:
         )
 
         for url in start_urls:
-            queue.add_url(url, depth=0)
+            self.queue.add_url(url, depth=0)
 
         self.start_time = time.perf_counter()
 
@@ -198,7 +200,7 @@ class AsyncCrawler:
 
             batch = []
             while len(batch) < batch_limit:
-                item = await queue.get_next_item()
+                item = await self.queue.get_next_item()
                 if item is None:
                     break
                 batch.append(item)
@@ -214,7 +216,7 @@ class AsyncCrawler:
 
             for new_links in results:
                 for link, depth in new_links:
-                    queue.add_url(link, depth=depth)
+                    self.queue.add_url(link, depth=depth)
 
             elapsed = time.perf_counter() - self.start_time
             speed = len(self.processed_urls) / elapsed if elapsed > 0 else 0
@@ -243,9 +245,12 @@ class AsyncCrawler:
 
         if result.get("error"):
             self.failed_urls[url] = result["error"]
+            self.queue.mark_failed(url, result["error"])
             return []
-
+        
         self.processed_urls[url] = result
+        self.queue.mark_processed(url)
+
         if self.storage is not None:
             status, content_type = self._response_meta.get(url, (None, ""))
             record = {
@@ -259,9 +264,9 @@ class AsyncCrawler:
                 "content_type": content_type,
             }
             try:
-                await self.storage.save(record)
+                await self._save_with_retry(record)
             except Exception as e:
-                logger.warning(f"Не удалось сохранить {url}: {type(e).__name__}: {e}")
+                logger.warning(f"Не удалось сохранить {url} после повторов: {type(e).__name__}: {e}")
 
         new_links = []
         if depth < self.max_depth:
@@ -287,5 +292,22 @@ class AsyncCrawler:
             "blocked_by_robots": len(self.blocked_by_robots),
             "avg_retry_time": self.retry_strategy.avg_retry_time(),
         }
+
+    async def _save_with_retry(self, record: dict) -> None:
+        async def _attempt(rec):
+            try:
+                await self.storage.save(rec)
+            except Exception as e:
+                raise TransientError(f"Ошибка сохранения: {e}")
+
+        await self.retry_strategy.execute_with_retry(_attempt, record)
+    
+if __name__ == "__main__":
+    from cli import parse_args, build_settings, run_crawler
+    import asyncio
+
+    args = parse_args()
+    settings = build_settings(args)
+    asyncio.run(run_crawler(settings))
 
     
