@@ -10,9 +10,7 @@ class RateLimiter:
         self.min_delay = min_delay
         self.jitter = jitter
         self.next_free: dict[str, float] = {}
-        self.next_free: dict[str, float] = {}
         self.domain_delay: dict[str, float] = {}
-        self.lock = asyncio.Lock()
         self.lock = asyncio.Lock()
 
     async def acquire(self, domain: str = None):

@@ -9,24 +9,61 @@ class HTMLParser:
         self.logger = logging.getLogger("parser")
 
     async def parse_html(self, html: str, url: str) -> dict:
-            try:
-                soup = BeautifulSoup(html, "lxml")
-                metadata = self.extract_metadata(soup)
+        result = {
+            "url": url,
+            "metadata": {},
+            "title": "",
+            "text": "",
+            "links": [],
+            "images": [],
+            "headings": [],
+            "lists": [],
+            "tables": [],
+        }
 
-                return {
-                    "url": url,
-                    "metadata": metadata,
-                    "title": metadata.get("title", ""),
-                    "text": self.extract_text(soup),
-                    "links": self.extract_links(soup, url),
-                    "images": self.extract_images(soup),
-                    "headings": self.extract_headings(soup),
-                    "lists": self.extract_lists(soup),
-                    "tables": self.extract_tables(soup),
-                }
-            except Exception as e:
-                self.logger.warning(f"Ошибка парсинга {url}: {e}")
-                raise ParseError(f"Не удалось распарсить {url}: {e}")
+        try:
+            soup = BeautifulSoup(html, "lxml")
+        except Exception as e:
+            self.logger.warning(f"Не удалось создать soup для {url}: {e}")
+            raise ParseError(f"Не удалось распарсить {url}: {e}")
+
+        try:
+            result["metadata"] = self.extract_metadata(soup)
+            result["title"] = result["metadata"].get("title", "")
+        except Exception as e:
+            self.logger.warning(f"metadata {url}: {e}")
+
+        try:
+            result["text"] = self.extract_text(soup)
+        except Exception as e:
+            self.logger.warning(f"text {url}: {e}")
+
+        try:
+            result["links"] = self.extract_links(soup, url)
+        except Exception as e:
+            self.logger.warning(f"links {url}: {e}")
+
+        try:
+            result["images"] = self.extract_images(soup)
+        except Exception as e:
+            self.logger.warning(f"images {url}: {e}")
+
+        try:
+            result["headings"] = self.extract_headings(soup)
+        except Exception as e:
+            self.logger.warning(f"headings {url}: {e}")
+
+        try:
+            result["lists"] = self.extract_lists(soup)
+        except Exception as e:
+            self.logger.warning(f"lists {url}: {e}")
+
+        try:
+            result["tables"] = self.extract_tables(soup)
+        except Exception as e:
+            self.logger.warning(f"tables {url}: {e}")
+
+        return result
 
     def extract_links(self, soup, base_url):
         links = []

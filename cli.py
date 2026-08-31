@@ -57,7 +57,11 @@ def build_settings(args) -> dict:
 
 async def run_crawler(settings):
     crawler = AdvancedCrawler(settings)
-    await crawler.crawl()
+    try:
+        await crawler.crawl()
+    except ValueError as e:
+        print(f"Ошибка: {e}")
+        return
     stats = crawler.get_stats()
 
     print(f"\nОбработано: {stats.total_pages()} | успешно: {stats.successful()} | ошибок: {stats.failed()}")

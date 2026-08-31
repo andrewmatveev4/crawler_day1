@@ -1,34 +1,28 @@
 import asyncio
-from crawler import AsyncCrawler
-from stats import CrawlerStats
+from parser import HTMLParser
 
 
 async def main():
-    crawler = AsyncCrawler(
-        max_concurrent=5,
-        max_depth=1,
-        respect_robots=False,
-        requests_per_second=10.0,
-    )
-    await crawler.crawl(
-        start_urls=["https://books.toscrape.com/"],
-        max_pages=8,
-        same_domain_only=True,
-    )
-    await crawler.close()
+    parser = HTMLParser()
 
-    stats = CrawlerStats(crawler)
+    # нормальный html — всё должно извлечься
+    html = """
+    <html>
+      <head><title>Тестовая страница</title></head>
+      <body>
+        <h1>Заголовок</h1>
+        <p>Немного текста тут.</p>
+        <a href="https://example.com/page">ссылка</a>
+      </body>
+    </html>
+    """
+    result = await parser.parse_html(html, "http://test.local")
 
     print("\n" + "=" * 40)
-    print("СТАТИСТИКА")
-    print("=" * 40)
-    print(f"Всего страниц:      {stats.total_pages()}")
-    print(f"Успешно:            {stats.successful()}")
-    print(f"Ошибок:             {stats.failed()}")
-    print(f"Время работы:       {stats.elapsed_time():.2f}s")
-    print(f"Средняя скорость:   {stats.avg_speed():.2f} стр/сек")
-    print(f"Статус-коды:        {stats.status_distribution()}")
-    print(f"Топ доменов:        {stats.top_domains()}")
+    print(f"title:  {result['title']}")
+    print(f"text:   {result['text'][:50]}...")
+    print(f"links:  {result['links']}")
+    print(f"error:  {result.get('error', 'НЕТ ошибки — частичный/полный результат вернулся')}")
 
 
 if __name__ == "__main__":

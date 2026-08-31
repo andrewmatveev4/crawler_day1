@@ -12,7 +12,7 @@ class URLFilter:
         # 1. фильтр по домену
         if self.same_domain_only:
             domain = urlparse(url).netloc
-            if domain not in self.base_domains:
+            if not any(domain == d or domain.endswith("." + d) for d in self.base_domains):
                 return False
 
         # 2. исключающие паттерны
@@ -43,7 +43,7 @@ def normalize_url(url: str) -> str:
 
 
 if __name__ == "__main__":
-    f = URLFilter(same_domain_only=True, base_domain="example.com",
+    f = URLFilter(same_domain_only=True, base_domains=["example.com"],
                   exclude_patterns=[".pdf", "/admin"])
 
     print(f.is_allowed("https://example.com/page1"))      # True  — свой домен, чистый

@@ -60,6 +60,7 @@ class AsyncCrawler:
         self._response_meta = {}
         self.start_time = None
         self.end_time = None
+        self._meta_lock = asyncio.Lock()
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
@@ -92,7 +93,8 @@ class AsyncCrawler:
                 async with session.get(url, headers=headers, timeout=timeout) as response:
                     status = response.status
                     content_type = response.headers.get("Content-Type", "")
-                    self._response_meta[url] = (status, content_type)
+                    async with self._meta_lock:
+                        self._response_meta[url] = (status, content_type)
                     response.raise_for_status()
                     text = await response.text()
                     logger.info(f"Done: {url} ({response.status}, {len(text)} bytes)")
@@ -190,7 +192,10 @@ class AsyncCrawler:
         )
 
         for url in start_urls:
-            self.queue.add_url(url, depth=0)
+            if url_filter.is_allowed(url):
+                await self.queue.add_url(url, depth=0)
+            else:
+                logger.info(f"Стартовый URL отфильтрован: {url}")
 
         self.start_time = time.perf_counter()
 
@@ -216,7 +221,7 @@ class AsyncCrawler:
 
             for new_links in results:
                 for link, depth in new_links:
-                    self.queue.add_url(link, depth=depth)
+                    await self.queue.add_url(link, depth=depth)
 
             elapsed = time.perf_counter() - self.start_time
             speed = len(self.processed_urls) / elapsed if elapsed > 0 else 0
@@ -243,13 +248,16 @@ class AsyncCrawler:
 
         result = await self.fetch_and_parse(url)
 
+        if url in self.blocked_by_robots:
+            return []
+
         if result.get("error"):
             self.failed_urls[url] = result["error"]
-            self.queue.mark_failed(url, result["error"])
+            await self.queue.mark_failed(url, result["error"])
             return []
         
         self.processed_urls[url] = result
-        self.queue.mark_processed(url)
+        await self.queue.mark_processed(url)
 
         if self.storage is not None:
             status, content_type = self._response_meta.get(url, (None, ""))

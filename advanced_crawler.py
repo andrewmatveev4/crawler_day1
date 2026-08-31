@@ -57,7 +57,11 @@ class AdvancedCrawler:
             urls = start_urls
         else:
             urls = await self._get_start_urls()
-
+        if not urls:
+            raise ValueError(
+                "Не заданы стартовые URL: укажите --urls или sitemap в конфиге"
+            )
+        
         await self.crawler.crawl(
             start_urls=urls,
             max_pages=self.settings.get("max_pages", 100),
