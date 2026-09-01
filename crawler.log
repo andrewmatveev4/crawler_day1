@@ -193,3 +193,22 @@
 10:52:28 | INFO | Start: https://books.toscrape.com/catalogue/category/books/classics_6/index.html
 10:52:29 | INFO | Done: https://books.toscrape.com/catalogue/category/books/classics_6/index.html (200, 47855 bytes)
 10:52:29 | INFO | Прогресс: 8/8 (100%) | ошибок=0 | скорость=1.0 стр/сек | ETA=0s
+16:18:01 | INFO | Start: https://books.toscrape.com
+16:18:02 | INFO | Done: https://books.toscrape.com (200, 51274 bytes)
+16:18:02 | INFO | Прогресс: 1/8 (12%) | ошибок=0 | скорость=0.8 стр/сек | ETA=8s
+16:18:02 | INFO | Start: https://books.toscrape.com/index.html
+16:18:03 | INFO | Done: https://books.toscrape.com/index.html (200, 51274 bytes)
+16:18:03 | INFO | Start: https://books.toscrape.com/catalogue/category/books_1/index.html
+16:18:04 | INFO | Done: https://books.toscrape.com/catalogue/category/books_1/index.html (200, 50587 bytes)
+16:18:04 | INFO | Start: https://books.toscrape.com/catalogue/category/books/travel_2/index.html
+16:18:04 | INFO | Done: https://books.toscrape.com/catalogue/category/books/travel_2/index.html (200, 36992 bytes)
+16:18:05 | INFO | Start: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html
+16:18:06 | INFO | Done: https://books.toscrape.com/catalogue/category/books/mystery_3/index.html (200, 50368 bytes)
+16:18:06 | INFO | Start: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html
+16:18:07 | INFO | Done: https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html (200, 50089 bytes)
+16:18:07 | INFO | Start: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html
+16:18:07 | INFO | Done: https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html (200, 51435 bytes)
+16:18:08 | INFO | Прогресс: 7/8 (88%) | ошибок=0 | скорость=1.1 стр/сек | ETA=1s
+16:18:08 | INFO | Start: https://books.toscrape.com/catalogue/category/books/classics_6/index.html
+16:18:09 | INFO | Done: https://books.toscrape.com/catalogue/category/books/classics_6/index.html (200, 47855 bytes)
+16:18:09 | INFO | Прогресс: 8/8 (100%) | ошибок=0 | скорость=1.0 стр/сек | ETA=0s

@@ -33,19 +33,21 @@ class CSVStorage(DataStorage):
     def __init__(self, filepath: str):
         self.filepath = filepath
         self._header_written = False
+        self._lock = asyncio.Lock()
 
     async def save(self, data: dict) -> None:
-        buffer = io.StringIO()
-        writer = csv.writer(buffer)
+        async with self._lock:
+            buffer = io.StringIO()
+            writer = csv.writer(buffer)
 
-        if not self._header_written:
-            writer.writerow(list(data.keys()))
-            self._header_written = True
+            if not self._header_written:
+                writer.writerow(list(data.keys()))
+                self._header_written = True
 
-        writer.writerow(list(data.values()))
+            writer.writerow(list(data.values()))
 
-        async with aiofiles.open(self.filepath, mode="a", encoding="utf-8", newline="") as f:
-            await f.write(buffer.getvalue())
+            async with aiofiles.open(self.filepath, mode="a", encoding="utf-8", newline="") as f:
+                await f.write(buffer.getvalue())
 
     async def close(self) -> None:
         pass

@@ -45,6 +45,7 @@ class CrawlerStats:
             "total_pages": self.total_pages(),
             "successful": self.successful(),
             "failed": self.failed(),
+            "blocked_by_robots": self.blocked_by_robots(),
             "elapsed_time": round(self.elapsed_time(), 2),
             "avg_speed": round(self.avg_speed(), 2),
             "status_distribution": self.status_distribution(),
@@ -83,7 +84,7 @@ class CrawlerStats:
 <body>
     <h1>Отчёт краулера</h1>
     <p>Всего страниц: <b>{data['total_pages']}</b></p>
-    <p>Успешно: <b>{data['successful']}</b> | Ошибок: <b>{data['failed']}</b></p>
+    <p>Успешно: <b>{data['successful']}</b> | Ошибок: <b>{data['failed']}</b> | Заблокировано robots: <b>{data['blocked_by_robots']}</b></p>
     <p>Время работы: <b>{data['elapsed_time']}s</b> | Скорость: <b>{data['avg_speed']} стр/сек</b></p>
 
     <h2>Статус-коды</h2>
@@ -99,3 +100,6 @@ class CrawlerStats:
 
     def __getitem__(self, key):
         return self.to_dict()[key]
+
+    def blocked_by_robots(self) -> int:
+        return len(self.crawler.blocked_by_robots)

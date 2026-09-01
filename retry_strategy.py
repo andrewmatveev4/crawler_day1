@@ -21,7 +21,7 @@ class RetryStrategy:
         self.retry_delays = []
 
     async def execute_with_retry(self, coro, *args, pass_attempt: bool = False, **kwargs):
-        for attempt in range(self.max_retries):
+        for attempt in range(self.max_retries + 1):
             try:
                 if pass_attempt:
                     result = await coro(*args, attempt=attempt, **kwargs)
@@ -42,13 +42,13 @@ class RetryStrategy:
                     logger.warning(f"Не повторяем ({type(e).__name__}) — постоянная ошибка")
                     raise
 
-                if attempt < self.max_retries - 1:
+                if attempt < self.max_retries:
                     self.stats["retried"] += 1
                     delay = self.backoff_factor ** attempt
                     self.retry_delays.append(delay)
                     self.errors_by_type[type(e).__name__] = self.errors_by_type.get(type(e).__name__, 0) + 1
                     logger.warning(
-                        f"Попытка {attempt + 1}/{self.max_retries} ({type(e).__name__}), жду {delay:.1f}s"
+                            f"Попытка {attempt + 1}/{self.max_retries + 1} ({type(e).__name__}), жду {delay:.1f}s"
                     )
                     await asyncio.sleep(delay)
                 else:
