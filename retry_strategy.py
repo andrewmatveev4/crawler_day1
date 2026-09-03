@@ -54,7 +54,7 @@ class RetryStrategy:
                 else:
                     self.stats["gave_up"] += 1
                     self.errors_by_type[type(e).__name__] = self.errors_by_type.get(type(e).__name__, 0) + 1
-                    logger.warning(f"Все {self.max_retries} попыток исчерпаны ({type(e).__name__})")
+                    logger.warning(f"Все {self.max_retries + 1} попыток исчерпаны ({type(e).__name__})")
                     raise
 
     def avg_retry_time(self) -> float:

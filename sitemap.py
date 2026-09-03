@@ -32,13 +32,29 @@ class SitemapParser:
             return []
 
         tag = root.tag.lower()
-        locs = [loc.text.strip() for loc in root.iter() if loc.tag.lower().endswith("loc") and loc.text]
+
+        def local_name(element_tag: str) -> str:
+            # убираем namespace-префикс {http://...}loc → loc
+            return element_tag.split("}")[-1].lower()
 
         if tag.endswith("sitemapindex"):
+            # индекс: ищем <sitemap> → внутри <loc> = адрес другого sitemap
             all_urls = []
-            for child_sitemap_url in locs:
-                child_urls = await self.fetch_sitemap(child_sitemap_url)
-                all_urls.extend(child_urls)
+            for child in root:
+                if local_name(child.tag) != "sitemap":
+                    continue
+                for sub in child:
+                    if local_name(sub.tag) == "loc" and sub.text:
+                        child_urls = await self.fetch_sitemap(sub.text.strip())
+                        all_urls.extend(child_urls)
             return all_urls
         else:
-            return locs
+            # urlset: ищем <url> → внутри <loc> = адрес страницы
+            urls = []
+            for child in root:
+                if local_name(child.tag) != "url":
+                    continue
+                for sub in child:
+                    if local_name(sub.tag) == "loc" and sub.text:
+                        urls.append(sub.text.strip())
+            return urls

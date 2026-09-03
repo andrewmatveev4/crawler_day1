@@ -7,7 +7,7 @@ class CrawlerStats:
         self.crawler = crawler
 
     def total_pages(self) -> int:
-        return len(self.crawler.visited_urls)
+        return self.successful() + self.failed() + self.blocked_by_robots()
 
     def successful(self) -> int:
         return len(self.crawler.processed_urls)

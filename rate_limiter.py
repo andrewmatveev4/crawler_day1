@@ -18,15 +18,14 @@ class RateLimiter:
 
         async with self.lock:
             now = time.monotonic()
-            domain_min = self.domain_delay.get(key, self.min_delay)
-            step = max(self.interval, domain_min)
+            domain_delay = self.domain_delay.get(key, 0.0)
+            step = max(self.interval, self.min_delay, domain_delay)
             slot = max(now, self.next_free.get(key, 0.0))
+            if self.jitter > 0:
+                slot += random.uniform(0, self.jitter)
             self.next_free[key] = slot + step
 
         wait = slot - now
-
-        if self.jitter > 0:
-            wait += random.uniform(0, self.jitter)
 
         if wait > 0:
             await asyncio.sleep(wait)
