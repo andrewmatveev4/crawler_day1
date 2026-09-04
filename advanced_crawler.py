@@ -50,6 +50,8 @@ class AdvancedCrawler:
             jitter=self.settings.get("jitter", 0.0),
             respect_robots=self.settings.get("respect_robots", False),
             user_agent=self.settings.get("user_agent", "MyBot/1.0"),
+            max_retries_on_error=self.settings.get("max_retries", 3),
+            backoff_factor=self.settings.get("backoff_factor", 2.0),
             storage=storage,
         )
 
@@ -89,8 +91,11 @@ class AdvancedCrawler:
     async def _get_start_urls(self) -> list:
         sitemap_url = self.settings.get("sitemap")
         if sitemap_url:
+            import aiohttp
             parser = SitemapParser(user_agent=self.settings.get("user_agent", "MyBot/1.0"))
-            urls = await parser.fetch_sitemap(sitemap_url)
+            timeout = aiohttp.ClientTimeout(total=30)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                urls = await parser.fetch_sitemap(sitemap_url, session=session)
             logger.info(f"Из sitemap получено {len(urls)} url")
             return urls
         return self.settings.get("urls", [])

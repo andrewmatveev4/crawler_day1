@@ -167,12 +167,14 @@ class AsyncCrawler:
     async def _is_allowed_by_robots(self, url: str) -> bool:
         if not self.respect_robots:
             return True
-        return await self._robots.can_fetch(url, user_agent=self.user_agent)
+        session = await self._get_session()
+        return await self._robots.can_fetch(url, user_agent=self.user_agent, session=session)
 
     async def _apply_crawl_delay(self, url: str):
         if not self.respect_robots:
             return
-        delay = await self._robots.get_crawl_delay(url, user_agent=self.user_agent)
+        session = await self._get_session()
+        delay = await self._robots.get_crawl_delay(url, user_agent=self.user_agent, session=session)
         if delay > 0:
             domain = urlparse(url).netloc
             self._rate_limiter.set_domain_delay(domain, delay)
@@ -240,29 +242,28 @@ class AsyncCrawler:
         return self.processed_urls
     
     async def _process_one(self, url: str, depth: int, url_filter) -> list:
-        url = normalize_url(url)
-
-        if url in self.visited_urls:
+        normalized = normalize_url(url)
+        if normalized in self.visited_urls:
             return []
-        self.visited_urls.add(url)
+        self.visited_urls.add(normalized)
 
-        result = await self.fetch_and_parse(url)
+        result = await self.fetch_and_parse(url)   # загрузка/резолв — по оригиналу
 
         if url in self.blocked_by_robots:
             return []
 
         if result.get("error"):
-            self.failed_urls[url] = result["error"]
-            await self.queue.mark_failed(url, result["error"])
+            self.failed_urls[normalized] = result["error"]
+            await self.queue.mark_failed(normalized, result["error"])
             return []
-        
-        self.processed_urls[url] = result
-        await self.queue.mark_processed(url)
+
+        self.processed_urls[normalized] = result
+        await self.queue.mark_processed(normalized)
 
         if self.storage is not None:
             status, content_type = self._response_meta.get(url, (None, ""))
             record = {
-                "url": url,
+                "url": normalized,
                 "title": result.get("title", ""),
                 "text": result.get("text", ""),
                 "links": result.get("links", []),
@@ -274,7 +275,7 @@ class AsyncCrawler:
             try:
                 await self._save_with_retry(record)
             except Exception as e:
-                logger.warning(f"Не удалось сохранить {url} после повторов: {type(e).__name__}: {e}")
+                logger.warning(f"Не удалось сохранить {normalized} после повторов: {type(e).__name__}: {e}")
 
         new_links = []
         if depth < self.max_depth:
